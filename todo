@@ -1,0 +1,6 @@
+where to start:
+Draw a diagram.
+Make a 5 input NN with the permutations on the inputs for output swaps.
+	This will be to be interpreted.
+
+Make a policy network and evaluation (google this a lot)
