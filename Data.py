@@ -1,3 +1,6 @@
+import time
+import random
+
 class Data:
     def __init__(self, values=[5, 3, 1, 2, 4]):
         self._values = values
@@ -7,8 +10,11 @@ class Data:
         # TODO add sorting
         self._answer = [1, 2, 3, 4, 5]
         
-    def Reset(self):
+    def Shuffle(self):
         self._state = self._values
+        for i in range(50):
+            x, y = self.Interpret(random.randint(0, 9))
+            self.Swap(x, y)
     
     # TODO make dynamic
     def Interpret(self, action):
@@ -62,17 +68,24 @@ class Data:
     def Act(self, action):
         x, y = self.Interpret(action)
         state = self.Swap(x, y)
-        reward = self.Reward()
+        reward, done = self.Reward()
         
-        return state, reward
+        return state, reward, done
         
     def Reward(self):
         i = 0
         reward = 0
+        correct_count = 0
+        done = False
         for v in self._state:
             if v == self._answer[i]:
-                reward += 1
+                correct_count += 1
+                
+            if correct_count == len(self._state):
+                reward = 1
+                done = True
+                
             i += 1
             
-        return reward
+        return reward, done
             

@@ -9,6 +9,9 @@ from keras.layers import Dropout
 import numpy as np
 import random
 
+import keras.backend as K
+import time
+
 # lr = learning rate
 # gamma = discount rate
 # ep = exploration rate
@@ -23,18 +26,30 @@ class Model:
         
         self._inputCount = 5 # TODO change to allow for dynamic sizing.
         self._outputCount = 11 # TODO change to function for calculating choose.
+        self._reward = 0
         
         # self._session = tf.Session() # replaced by keras
         self.DefineModel()
         # self._session.run(self._initializer) # replaced by keras
         
+    def customLoss(self):
+        def loss(y_true, y_pred):
+            v = ((self._reward + self._gamma * y_pred) - y_true)
+            return v * v
+        
+        return loss
+    
     def DefineModel(self):
         self._classifier = Sequential()
-        self._classifier.add(Dense(units=64, activation='sigmoid', input_dim=self._inputCount))
-        self._classifier.add(Dense(units=64, activation='sigmoid'))
+        self._classifier.add(Dense(units=128, activation='tanh', input_dim=self._inputCount))
+        self._classifier.add(Dense(units=128, activation='tanh'))
+        self._classifier.add(Dense(units=32, activation='tanh'))
+        self._classifier.add(Dense(units=16, activation='sigmoid'))
+        self._classifier.add(Dense(units=16, activation='sigmoid'))
         self._classifier.add(Dense(units=self._outputCount, activation='softmax'))
-        self._classifier.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    
+        self._classifier.compile(optimizer='adam', loss=self.customLoss(), metrics=['accuracy'])
+        # self._classifier.compile(optimizer='adam', loss="categorical_crossentropy", metrics=['accuracy'])
+        
     def Act(self, state):
         actions = self._classifier.predict(state)		
         return actions
@@ -59,6 +74,10 @@ class Model:
         
         print(state_Q_values)
         state_Q_values[0][action] = reward + self._gamma * np.amax(next_Q_values)
+        
+        self._reward = reward
+        self._curstate = state_Q_values
+        self._nextstate = next_Q_values
         
         self._classifier.fit(state, state_Q_values)
         
