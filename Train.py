@@ -19,7 +19,7 @@ def Main():
         model.Update(state, next_state, action, reward)
         
         total_reward += reward
-        if step % 250 == 0:
+        if step % 1000 == 0:
             # performance = (total_reward - last_total) / 250.0
             # print(json.dumps({'step': step, 'performance': performance, 'total_reward': total_reward}))
             # last_total = total_reward

@@ -19,10 +19,10 @@ class Model:
         self._lr = lr
         self._gamma = gamma
         self._ep = epsilon
-        self._epdelt = 1.0 / iterations
+        self._epdelt = 1.0/iterations
         
         self._inputCount = 5 # TODO change to allow for dynamic sizing.
-        self._outputCount = 10 # TODO change to function for calculating choose.
+        self._outputCount = 11 # TODO change to function for calculating choose.
         
         # self._session = tf.Session() # replaced by keras
         self.DefineModel()
@@ -51,7 +51,7 @@ class Model:
         
     def RandomAction(self):
         # TODO make dynamic based on outputs
-        return random.randint(0, 9)
+        return random.randint(0, self._outputCount-1)
         
     def Train(self, state, action, reward, next_state):
         state_Q_values = self.Act(state)

@@ -44,6 +44,9 @@ class Data:
         elif action == 9:
             x = 3
             y = 4
+        elif action == 10:
+            x = 0
+            y = 0
             
         return x, y
     
