@@ -4,14 +4,14 @@ import random
 class Data:
     def __init__(self, values=[5, 3, 1, 2, 4]):
         self._values = values
-        self._state = self._values
+        self._state = self._values.copy()
         
         # TODO add cruncher
         # TODO add sorting
         self._answer = [1, 2, 3, 4, 5]
         
     def Shuffle(self):
-        self._state = self._values
+        self._state = self._values.copy()
         for i in range(50):
             x, y = self.Interpret(random.randint(0, 9))
             self.Swap(x, y)
@@ -68,24 +68,44 @@ class Data:
     def Act(self, action):
         x, y = self.Interpret(action)
         state = self.Swap(x, y)
-        reward, done = self.Reward()
+        reward, correct = self.Reward()
         
-        return state, reward, done
-        
+        return state, reward, correct
+    
+    def Action(self, action):
+        x, y = self.Interpret(action)
+        state = self.Swap(x, y)
+        correct = self.CheckIfCorrect()
+        return state, correct
+    
+    def CheckIfCorrect(self):
+        i = 0
+        correct_count = 0
+        correct = False
+        for v in self._state:
+            if v == self._answer[i]:
+                correct_count += 1
+            i += 1
+        if correct_count == len(self._state):
+            correct = True
+        return correct
+    
     def Reward(self):
         i = 0
         reward = 0
         correct_count = 0
-        done = False
-        for v in self._state:
-            if v == self._answer[i]:
-                correct_count += 1
-                
-            if correct_count == len(self._state):
-                reward = 1
-                done = True
-                
-            i += 1
+        correct = self.CheckIfCorrect()
+        if correct:
+            reward = 1
+        else:
+            reward = 0
             
-        return reward, done
-            
+        return reward, correct
+    
+    def WaitReward(self, steps, correct):
+        reward = 0
+        if correct:
+            reward = 10.0 / (steps + 1)
+        else:
+            reward = -1.0
+        return reward
