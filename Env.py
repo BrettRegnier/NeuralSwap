@@ -89,7 +89,7 @@ class Data(gym.Env):
     def Reward(self):
         self._steps += 1
         i = 0
-        reward = -2
+        reward = -2.5
         correct_count = 0
         done = False
         for v in self._state:

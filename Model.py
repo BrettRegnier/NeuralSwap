@@ -41,10 +41,11 @@ class Model:
     
     def DefineModel(self):
         self._classifier = Sequential()
-        self._classifier.add(Dense(units=128, activation='tanh', input_dim=self._inputCount))
+        self._classifier.add(Dense(units=512, activation='tanh', input_dim=self._inputCount))
+        self._classifier.add(Dense(units=256, activation='tanh'))
         self._classifier.add(Dense(units=128, activation='tanh'))
+        self._classifier.add(Dense(units=64, activation='tanh'))
         self._classifier.add(Dense(units=32, activation='tanh'))
-        self._classifier.add(Dense(units=16, activation='sigmoid'))
         self._classifier.add(Dense(units=16, activation='sigmoid'))
         self._classifier.add(Dense(units=self._outputCount, activation='softmax'))
         self._classifier.compile(optimizer='adam', loss=self.customLoss(), metrics=['accuracy'])

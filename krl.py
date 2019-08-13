@@ -25,18 +25,18 @@ nb_actions = env.action_space.n
 model = Sequential()
 model.add(Flatten(input_shape=env.observation_space.shape))
 model.add(Dense(units=nb_actions, activation='sigmoid', input_dim=nb_actions))
-model.add(Dense(units=128, activation='relu'))
+model.add(Dense(units=256, activation='relu'))
+model.add(Dense(units=512, activation='relu'))
+model.add(Dense(units=256, activation='relu'))
 model.add(Dense(units=128, activation='relu'))
 model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=32, activation='relu'))
-model.add(Dense(units=16, activation='relu'))
 model.add(Dense(units=nb_actions, activation='linear'))
 
 if load:
     Load(model, "Karl.h5")
 else:
     # Train Karl
-    memory = SequentialMemory(limit=2000, window_length=1)
+    memory = SequentialMemory(limit=5000, window_length=1)
     policy = BoltzmannQPolicy()
     dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10, target_model_update=1e-2,
                 policy=policy)

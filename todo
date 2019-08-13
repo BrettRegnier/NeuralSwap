@@ -1,6 +1,7 @@
-where to start:
-Draw a diagram.
-Make a 5 input NN with the permutations on the inputs for output swaps.
-	This will be to be interpreted.
+Clean up the code
+Daylend - Report is 3-4 pages.
 
-Make a policy network and evaluation (google this a lot)
+Possible:
+	Build something around the NN to take in different sizes of inputs and partition them to be in different groups and sort the groups first then sort as a whole.
+	
+1 Page for assignment 4th
