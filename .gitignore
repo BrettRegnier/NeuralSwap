@@ -1,8 +1,2 @@
-
-__pycache__/Model.cpython-37.pyc
-__pycache__/Data.cpython-37.pyc
-.idea/workspace.xml
-.idea/vcs.xml
-.idea/NeuralSwap.iml
-.idea/modules.xml
-.idea/misc.xml
+__pycache__/
+.idea/
