@@ -6,11 +6,13 @@ from keras.layers import Flatten
 from keras.layers import Dense
 from keras.layers import BatchNormalization
 from keras.layers import Dropout
+from keras.optimizers import Adam
 import numpy as np
 import random
 
 import keras.backend as K
 import time
+from collections import deque
 
 # lr = learning rate
 # gamma = discount rate
@@ -23,9 +25,14 @@ class Model:
         self._gamma = gamma
         self._ep = epsilon
         self._epdelt = 1.0/iterations
+        self._memory = deque(maxlen=2000)
+        
+        # different algorithm
+        self._epmin = 0.01
+        self._epdecay = 0.99
         
         self._inputCount = 5 # TODO change to allow for dynamic sizing.
-        self._outputCount = 11 # TODO change to function for calculating choose.
+        self._outputCount = 10 # TODO change to function for calculating choose.
         self._reward = 0
         
         # self._session = tf.Session() # replaced by keras
@@ -39,6 +46,15 @@ class Model:
         
         return loss
     
+    def HuberLoss(self, y_true, y_pred, clip_delta=1.0):
+        error = y_true - y_pred
+        cond  = K.abs(error) <= clip_delta
+
+        squared_loss = 0.5 * K.square(error)
+        quadratic_loss = 0.5 * K.square(clip_delta) + clip_delta * (K.abs(error) - clip_delta)
+
+        return K.mean(tf.where(cond, squared_loss, quadratic_loss))
+    
     def DefineModel(self):
         self._classifier = Sequential()
         self._classifier.add(Dense(units=128, activation='tanh', input_dim=self._inputCount))
@@ -47,8 +63,8 @@ class Model:
         self._classifier.add(Dense(units=16, activation='sigmoid'))
         self._classifier.add(Dense(units=16, activation='sigmoid'))
         self._classifier.add(Dense(units=self._outputCount, activation='softmax'))
-        self._classifier.compile(optimizer='adam', loss=self.customLoss(), metrics=['accuracy'])
-        # self._classifier.compile(optimizer='adam', loss="categorical_crossentropy", metrics=['accuracy'])
+        self._classifier.compile(optimizer=Adam(lr=self._lr), loss=self.HuberLoss, metrics=['accuracy'])
+        # self._classifier.compile(optimizer=Adam(lr=self._lr), loss="categorical_crossentropy", metrics=['accuracy'])
         
     def Act(self, state):
         actions = self._classifier.predict(state)		
@@ -86,3 +102,22 @@ class Model:
         
         if self._ep > 0:
             self._ep -= self._epdelt
+            
+    def AddMemory(self, state, action, next_state, reward, done):
+        self._memory.append((state, action, reward, next_state, done))
+        
+    def Replay(self, batch_size):
+        minibatch = random.sample(self._memory, batch_size)
+        for state, action, reward, next_state, done in minibatch:
+            target = self.Act([[state]])
+            if done:
+                target[0][action] = reward
+            else:
+                t = self.Act([[next_state]])[0]
+                target[0][action] = reward + self._gamma * np.amax(t)
+            self._classifier.fit([[state]], target, epochs=1, verbose=0)
+        if self._ep > self._epmin:
+            self._ep *= self._epdecay
+            
+    def ClearMemory(self):
+        self._memory = deque(maxlen=2000)
