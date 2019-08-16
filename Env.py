@@ -10,32 +10,59 @@ class Data(gym.Env):
     def __init__(self, values=[5, 3, 1, 2, 4]):
         super(Data, self).__init__()
         self._values = values
-        self._state = self._values
+        self._state = self._values.copy()
         self.action_space = spaces.Discrete(10)
         self.observation_space = spaces.Box(low=0, high=5, shape=(1,5), dtype=np.int32)
         self._steps = 0
 
-        # TODO add cruncher
-        # TODO add sorting
-        self._answer = [1, 2, 3, 4, 5]
+        self._answer = sorted(self._values)
+        self._isTraining = True
 
     def step(self, action):
+        if self._isTraining:
+            return self.TrainingStep(action)
+        else:
+            return self.TestingStep(action)
+
+    def TrainingStep(self, action):        
         x, y = self.Interpret(action)
         state = self.Swap(x, y)
         reward, done = self.Reward()
 
         return state, reward, done, {}
+        
+    def TestingStep(self, action):
+        self._steps += 1
+        x, y = self.Interpret(action)
+        state = self.Swap(x, y)
+        done = False
+        if self._steps == 4:
+            if self.IsCorrect() == False:
+                print('')
+                print("WRONG")
+                print('')
+            done = True
+        
+        reward = 0
+        return state, reward, done, {}
 
     def reset(self):
-        self._state = self._values
         self._steps = 0
-        for i in range(50):
-            x, y = self.Interpret(random.randint(0, 9))
-            self.Swap(x, y)
+        
+        while self.IsCorrect():
+            self.Shuffle()
+            
+        print("New state", self._state)
+            
         return self._state
 
     def render(self, mode='human', close=False):
-        print(self._state)
+        print("step:", self._steps, self._state)
+        
+    def Shuffle(self):        
+        for i in range(50):
+            x, y = self.Interpret(random.randint(0, 9))
+            self.Swap(x, y)
 
     # TODO make dynamic
     def Interpret(self, action):
@@ -88,18 +115,25 @@ class Data(gym.Env):
 
     def Reward(self):
         self._steps += 1
-        i = 0
+        # reward = -(2 + 0.01 * self._steps)
         reward = -2.5
+
+        correct = self.IsCorrect()
+        if correct:
+            # reward = max(0,10/self._steps)
+            reward = max(0,5/self._steps)
+        return reward, correct
+    
+    def IsCorrect(self): 
+        i = 0
         correct_count = 0
-        done = False
         for v in self._state:
             if v == self._answer[i]:
                 correct_count += 1
-
-            if correct_count == len(self._state):
-                reward = max(0,5/self._steps)
-                done = True
-
             i += 1
-
-        return reward, done
+                
+        if correct_count == len(self._state):
+            return True
+            
+        return False
+        
