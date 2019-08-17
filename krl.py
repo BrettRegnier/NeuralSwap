@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
@@ -7,28 +8,24 @@ from keras.optimizers import Adam
 from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
-from Env import Data
-
 import matplotlib.pyplot as plt
 
-load = True
-
-def Load(model, name):
-    model.load_weights(name)
-
-def Save(model, name):
-    model.save_weights(name)
+from Env import Data
 
 class Karl:
-    def __init__(self, env, name='Karl.h5', load=False memory=5000, training_steps=20000):
+    def __init__(self, env, name='Karl.h5', load=True memory=5000, training_steps=20000):
         self._env = env
         self._memory = memory
         self._ts = training_steps
         self._model = self.CreateModel()
+
+        if load:
+            self.Load()
+        else:
+            self.Train()
         
-        if load: Load()
-        
-    def CreateModel(self):
+    def CreateModel(self):        
+        # Build Karl
         nb_actions = self._env.action_space.n
         memory = SequentialMemory(limit=self._memory, window_length=1)
         policy = BoltzmannQPolicy()
@@ -46,46 +43,26 @@ class Karl:
         self._dqn.compile(Adam(lr=1e-3), metrics=['mae'])
         
     def Load(self, name):
-        self._model.load_weights(name)
+        if os.path.isdir("./" + name)
+            self._model.load_weights(name)
+            self._env._isTraining = False
+        else:
+            self.Train()
     
     def Save(self, name):
         self._model.save_weights(name)
-    
         
-    def CreateModel(self):
-        pass
-    
-env = Data()
-nb_actions = env.action_space.n
-
-model = Sequential()
-model.add(Flatten(input_shape=env.observation_space.shape))
-model.add(Dense(units=5, activation='sigmoid'))
-model.add(Dense(units=256, activation='relu'))
-model.add(Dense(units=512, activation='relu'))
-model.add(Dense(units=256, activation='relu'))
-model.add(Dense(units=128, activation='relu'))
-model.add(Dense(units=64, activation='relu'))
-model.add(Dense(units=nb_actions, activation='linear'))
-memory = SequentialMemory(limit=5000, window_length=1)
-policy = BoltzmannQPolicy()
-dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10, target_model_update=1e-2,
-            policy=policy)
-dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-
-if load:
-    Load(model, "Karl.h5")
-    env._isTraining = False
-    dqn.test(env, nb_episodes=2, visualize=True)
-else:
-    # Train Karl
-    Save(model, "Karl.h5")
-    history = dqn.fit(env, nb_steps=20000, visualize=False, verbose=2)
-    plt.plot(history.history['nb_episode_steps'], linewidth=1.0)
-    #plt.plot(history.history['nb_steps'])
-    plt.title('Karl Fitness')
-    plt.ylabel('Number of steps per episode')
-    plt.xlabel('Episode')
-    #plt.legend(['Episode steps'], loc='upper left')
-    plt.show()
-
+    def Train(self):
+        
+        # Train Karl and save the plot points
+        history = self._dqn.fit(env, nb_steps=20000, visualize=False, verbose=2)
+        
+        # Save Karl
+        self.Save("Karl.h5")
+        
+        # Plot training points
+        plt.plot(history.history['nb_episode_steps'], linewidth=1.0)
+        plt.title('Karl Fitness')
+        plt.ylabel('Number of steps per episode')
+        plt.xlabel('Episode')
+        plt.show()
