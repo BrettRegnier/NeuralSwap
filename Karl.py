@@ -13,16 +13,13 @@ import matplotlib.pyplot as plt
 from Env import Data
 
 class Karl:
-    def __init__(self, env, name='Karl.h5', load=True memory=5000, training_steps=20000):
+    def __init__(self, env, name='Karl.h5', load=True, memory=5000, training_steps=20000):
         self._env = env
         self._memory = memory
         self._ts = training_steps
-        self._model = self.CreateModel()
+        self.CreateModel()
 
-        if load:
-            self.Load()
-        else:
-            self.Train()
+        if load: self.Load(name)
         
     def CreateModel(self):        
         # Build Karl
@@ -30,8 +27,8 @@ class Karl:
         memory = SequentialMemory(limit=self._memory, window_length=1)
         policy = BoltzmannQPolicy()
         self._model = Sequential()
-        self._model.add(Flatten(input_shape=env.observation_space.shape))
-        self._model.add(Dense(units=nb_actions, activation='sigmoid', input_dim=nb_actions))
+        self._model.add(Flatten(input_shape=self._env.observation_space.shape))
+        # self._model.add(Dense(units=nb_actions, activation='sigmoid', input_dim=nb_actions))
         self._model.add(Dense(units=256, activation='relu'))
         self._model.add(Dense(units=512, activation='relu'))
         self._model.add(Dense(units=256, activation='relu'))
@@ -43,19 +40,17 @@ class Karl:
         self._dqn.compile(Adam(lr=1e-3), metrics=['mae'])
         
     def Load(self, name):
-        if os.path.isdir("./" + name)
+        if os.path.isfile("./" + name):
             self._model.load_weights(name)
-            self._env._isTraining = False
         else:
-            self.Train()
+            print("No save found with the name", name)
     
     def Save(self, name):
         self._model.save_weights(name)
         
-    def Train(self):
-        
+    def Train(self):        
         # Train Karl and save the plot points
-        history = self._dqn.fit(env, nb_steps=20000, visualize=False, verbose=2)
+        history = self._dqn.fit(self._env, nb_steps=20000, visualize=False, verbose=2)
         
         # Save Karl
         self.Save("Karl.h5")
@@ -66,3 +61,11 @@ class Karl:
         plt.ylabel('Number of steps per episode')
         plt.xlabel('Episode')
         plt.show()
+        
+    def Test(self, values=None):
+        self._env._isTraining = False
+        if values != None:
+            self._env.SetValues(values)
+        
+        self._dqn.test(self._env, nb_episodes=100, visualize=True)
+        

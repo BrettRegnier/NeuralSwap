@@ -1,21 +1,19 @@
 import time
 import random
 import gym
-from gym import spaces
 import numpy as np
+import math
+from gym import spaces
 
 class Data(gym.Env):
     #metadata = {'render.modes': ['human']}
 
     def __init__(self, values=[5, 3, 1, 2, 4]):
         super(Data, self).__init__()
-        self._values = values
-        self._state = self._values.copy()
+        self.SetValues(values)
         self.action_space = spaces.Discrete(10)
         self.observation_space = spaces.Box(low=0, high=5, shape=(1,5), dtype=np.int32)
         self._steps = 0
-
-        self._answer = sorted(self._values)
         self._isTraining = True
 
     def step(self, action):
@@ -52,17 +50,37 @@ class Data(gym.Env):
         while self.IsCorrect():
             self.Shuffle()
             
-        print("New state", self._state)
+        print("New state", self._values)
             
         return self._state
 
     def render(self, mode='human', close=False):
-        print("step:", self._steps, self._state)
+        print("step:", self._steps, self._values)
         
-    def Shuffle(self):        
+    def Shuffle(self):
         for i in range(50):
             x, y = self.Interpret(random.randint(0, 9))
             self.Swap(x, y)
+            
+    # Used for changing the values of the env
+    def SetValues(self, values):
+        self._values = values
+        self._state = self.CompressValues(self._values)
+        self._answer = sorted(self._values)
+        
+        print(self._values)
+        print(self._state)
+        print(self._answer)
+        
+    def CompressValues(self, values):
+        larg = max(values)
+        arr = []
+        for v in values:
+            arr.append(math.tanh(v/larg))
+        return arr
+        
+    def Sigmoid(self, x):
+        return 1 / (1 + math.exp(-x))
 
     # TODO make dynamic
     def Interpret(self, action):
@@ -109,6 +127,10 @@ class Data(gym.Env):
         tmp = self._state[x]
         self._state[x] = self._state[y]
         self._state[y] = tmp
+        
+        tmp = self._values[x]
+        self._values[x] = self._values[y]
+        self._values[y] = tmp
 
         # print("Current Data", self._state)
         return self._state
@@ -127,12 +149,12 @@ class Data(gym.Env):
     def IsCorrect(self): 
         i = 0
         correct_count = 0
-        for v in self._state:
+        for v in self._values:
             if v == self._answer[i]:
                 correct_count += 1
             i += 1
                 
-        if correct_count == len(self._state):
+        if correct_count == len(self._values):
             return True
             
         return False
